@@ -5,8 +5,9 @@ namespace SharpDown.Models
     /// <summary>
     ///     Represents an type member type
     /// </summary>
-    public class TypeMemberModel : MemberModel
+    public class TypeMemberModel
     {
+        public readonly MemberModel Member;
 
         /// <summary>
         ///     Gets or Sets the constructor method members
@@ -32,5 +33,15 @@ namespace SharpDown.Models
         ///     Gets or Sets the non-constructor method members
         /// </summary>
         public List<MethodMemberModel> Methods { get; set; }
+
+        public TypeMemberModel(MemberModel member)
+        {
+            Member = member;
+            Constructors = new List<MethodMemberModel>();
+            Fields = new List<FieldMemberModel>();
+            Properties = new List<PropertyMemberModel>();
+            Events = new List<EventMemberModel>();
+            Methods = new List<MethodMemberModel>();
+        }
     }
 }

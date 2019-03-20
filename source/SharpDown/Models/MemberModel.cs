@@ -1,4 +1,3 @@
-using SharpDown.Interfaces;
 using System.Collections.Generic;
 
 namespace SharpDown.Models

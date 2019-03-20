@@ -5,6 +5,12 @@ namespace SharpDown.Models
     /// </summary>            
     public class FieldMemberModel : MemberModel
     {
+        public readonly MemberModel Member;
+
+        public FieldMemberModel(MemberModel member)
+        {
+            Member = member;
+        }
         
     }
 }

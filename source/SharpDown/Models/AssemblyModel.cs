@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace SharpDown.Models
 {
@@ -24,6 +26,21 @@ namespace SharpDown.Models
         public AssemblyModel()
         {
             Types = new List<TypeMemberModel>();
+        }
+
+        public TypeMemberModel this[string memberName]
+        {
+            get 
+            {
+                if(string.IsNullOrEmpty(memberName) || Types.Count == 0)
+                {
+                    throw new IndexOutOfRangeException();
+                }
+                else
+                {
+                    return Types.FirstOrDefault(x => x.Member.Name == memberName);
+                }
+            }
         }
     }
 }

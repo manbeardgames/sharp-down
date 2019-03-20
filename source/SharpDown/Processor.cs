@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
 using SharpDown.Models;
@@ -90,10 +91,48 @@ namespace SharpDown
             a.Attribute(XName.Get("name")).Value.Substring(2).CompareTo(
                 b.Attribute(XName.Get("name")).Value.Substring(2)));
 
-            // Process each of the members
-            foreach (var member in members)
+            var t = members.Where(x => x.Attribute(XName.Get("name")).Value[0] == 'T');
+            var f = members.Where(x => x.Attribute(XName.Get("name")).Value[0] == 'F');
+            var p = members.Where(x => x.Attribute(XName.Get("name")).Value[0] == 'P');
+            var m = members.Where(x => x.Attribute(XName.Get("name")).Value[0] == 'M');
+            var e = members.Where(x => x.Attribute(XName.Get("name")).Value[0] == 'E');
+            var bang = members.Where(x => x.Attribute(XName.Get("name")).Value[0] == '!');
+
+
+            //  Process all T: Members
+            foreach (var typeMember in t)
             {
-                Process(member);
+                Process(typeMember);
+            }
+
+            //  Process all F: Members
+            foreach(var fieldMembers in f)
+            {
+                Process(fieldMembers);
+            }
+
+            //  Process all P: Members
+            foreach(var propertyMember in p)
+            {
+                Process(propertyMember);
+            }
+
+            //  Process all M: Members
+            foreach(var methodMember in m)
+            {
+                Process(methodMember);
+            }
+
+            //  Process all E: members
+            foreach(var eventMember in e)
+            {
+                Process(eventMember);
+            }
+
+            //  Process all !: Members
+            foreach(var bangMember in bang)
+            {
+                Process(bangMember);
             }
 
         }
@@ -155,7 +194,7 @@ namespace SharpDown
         ///     Handles the processing of a T: "member" element
         /// </summary>
         /// <param name="typeElement">The "member" <see cref="XElement"/> with a name value beginning with T:</param>
-        /// <param name="member">The <see cref="MemberModel"/> reference</param>
+        /// <param name="member">The <see cref="TypeMemberModel"/> reference</param>
         private static void HandleTypeMember(XElement typeElement, MemberModel member)
         {
             //  Get the name without the T: type string
@@ -167,6 +206,10 @@ namespace SharpDown
             //  Rejoing the split name with periods, excluding the last element to form
             //  the namespace
             member.NameSpace = string.Join('.', nameSpaces, 0, nameSpaces.Length - 1);
+
+            TypeMemberModel model = new TypeMemberModel(member);
+
+            _assembly.Types.Add(model);
         }
 
 
@@ -186,6 +229,11 @@ namespace SharpDown
             //  Rejoing the split name with periods, excluding the last element, to
             //  form the namespace
             member.NameSpace = string.Join('.', namespaces, 0, namespaces.Length - 1);
+
+            FieldMemberModel model = new FieldMemberModel(member);
+
+            // var match = _assembly.Types.FirstOrDefault
+            
         }
 
         /// <summary>
@@ -217,6 +265,7 @@ namespace SharpDown
             var name = member.Name.Replace("M:", "");
 
             // TODO handle #ctor and () methods
+
         }
 
 
