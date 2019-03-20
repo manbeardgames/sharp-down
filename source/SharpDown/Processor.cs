@@ -7,23 +7,33 @@ using SharpDown.Models;
 
 namespace SharpDown
 {
+    /// <summary>
+    ///     Processes the <see cref="XDocument"/> imported by the <see cref="Importer"/>
+    /// </summary>
     public static class Processor
     {
-        private static Dictionary<string, string> s_context;
+        //  The assembly model that is cretaed from the processing
         private static AssemblyModel _assembly;
 
+        /// <summary>
+        ///     Tells the processor to begin
+        /// </summary>
         public static void Run(XDocument doc)
         {
             _assembly = new AssemblyModel();
             Process(doc.Root);
         }
 
+        /// <summary>
+        ///     Processes the given <see cref="XElement"/>
+        /// </summary>
+        /// <param name="root">The <see cref="XElement"/> to process </param>
         private static void Process(XElement root)
         {
-            if (root.Name != "param" && s_context["lastNode"] == "param")
-            {
-                // sw.WriteLine();
-            }
+            // if (root.Name != "param" && s_context["lastNode"] == "param")
+            // {
+            //     // sw.WriteLine();
+            // }
 
             switch (root.Name.ToString())
             {
@@ -39,9 +49,14 @@ namespace SharpDown
             }
         }
 
-        private static void HandleDocElement(XElement root)
+
+        /// <summary>
+        ///     Handles the processing of the "doc" element
+        /// </summary>
+        /// <param name="docElement">The "doc" <see cref="XElement"/></param>
+        private static void HandleDocElement(XElement docElement)
         {
-            foreach (var node in root.Nodes())
+            foreach (var node in docElement.Nodes())
             {
                 //  Typecast  the node to an XElement
                 var element = (XElement)node;
@@ -62,11 +77,15 @@ namespace SharpDown
             }
         }
 
-        private static void HandleMembersElement(XElement root)
+        /// <summary>
+        ///     Handles the processing of the "members" element
+        /// </summary>
+        /// <param name="membersElement">The "members" <see cref="XElement"/></param>
+        private static void HandleMembersElement(XElement membersElement)
         {
             //  First sort all of the child member nodes so that they are
             //  grouped properly
-            var members = new List<XElement>(root.Elements("member"));
+            var members = new List<XElement>(membersElement.Elements("member"));
             members.Sort((a, b) =>
             a.Attribute(XName.Get("name")).Value.Substring(2).CompareTo(
                 b.Attribute(XName.Get("name")).Value.Substring(2)));
@@ -79,7 +98,11 @@ namespace SharpDown
 
         }
 
-        private static void HandleSingleMemberElement(XElement root)
+        /// <summary>
+        ///     Handles the processing of a "member" element
+        /// </summary>
+        /// <param name="memberElement">The "member" <see cref="XElement"/></param>
+        private static void HandleSingleMemberElement(XElement memberElement)
         {
             //  Create a new MemberModel object
             var member = new MemberModel();
@@ -88,7 +111,7 @@ namespace SharpDown
             member.Assembly = _assembly.Name;
 
             //  Get the name identifier from the member
-            member.Name = root.Attribute(XName.Get("name")).Value;
+            member.Name = memberElement.Attribute(XName.Get("name")).Value;
 
             //  The first character of the name is the type of member
             member.MemberType = member.Name[0];
@@ -100,35 +123,40 @@ namespace SharpDown
             {
                 //  type: class, interface, struct, enum, delegate
                 case 'T':
-                    HandleTypeMember(root, member);
+                    HandleTypeMember(memberElement, member);
                     break;
                 //  field
                 case 'F':
-                    HandleFieldMember(root, member);
+                    HandleFieldMember(memberElement, member);
                     break;
                 //  Property
                 case 'P':
-                    HandlePropertyMember(root, member);
+                    HandlePropertyMember(memberElement, member);
                     break;
                 //  method (including such special methods as constructors operators, and so forth)
                 case 'M':
-                    HandleMethodMember(root, member);
+                    HandleMethodMember(memberElement, member);
                     break;
                 //  event
                 case 'E':
-                    HandleEventMember(root, member);
+                    HandleEventMember(memberElement, member);
                     break;
                 //  error string
                 case '!':
-                    HandleErrorMember(root, member);
+                    HandleErrorMember(memberElement, member);
                     break;
                 default:
-                    throw new Exception($"Member of type '{memberType}' is not supported");
+                    throw new Exception($"Member of type '{member.MemberType}' is not supported");
             }
 
         }
 
-        private static void HandleTypeMember(XElement root, MemberModel member)
+        /// <summary>
+        ///     Handles the processing of a T: "member" element
+        /// </summary>
+        /// <param name="typeElement">The "member" <see cref="XElement"/> with a name value beginning with T:</param>
+        /// <param name="member">The <see cref="MemberModel"/> reference</param>
+        private static void HandleTypeMember(XElement typeElement, MemberModel member)
         {
             //  Get the name without the T: type string
             var name = member.Name.Replace("T:", "");
@@ -142,8 +170,12 @@ namespace SharpDown
         }
 
 
-
-        private static void HandleFieldMember(XElement root, MemberModel member)
+        /// <summary>
+        ///     Handles the processing of a F: "member" element
+        /// </summary>
+        /// <param name="fieldElement">The "member" <see cref="XElement"/> with a name value beginning with F:</param>
+        /// <param name="member">The <see cref="MemberModel"/> reference</param>
+        private static void HandleFieldMember(XElement fieldElement, MemberModel member)
         {
             //  Ge thte name without the F:
             var name = member.Name.Replace("F:", "");
@@ -156,8 +188,12 @@ namespace SharpDown
             member.NameSpace = string.Join('.', namespaces, 0, namespaces.Length - 1);
         }
 
-
-        private static void HandlePropertyMember(XElement root, MemberModel member)
+        /// <summary>
+        ///     Handles the processing of a P: "member" element
+        /// </summary>
+        /// <param name="propertyElement">The "member" <see cref="XElement"/> with a name value beginning with P:</param>
+        /// <param name="member">The <see cref="MemberModel"/> reference</param>
+        private static void HandlePropertyMember(XElement propertyElement, MemberModel member)
         {
             //  Get the name without the P:
             var name = member.Name.Replace("P:", "");
@@ -170,16 +206,33 @@ namespace SharpDown
             member.NameSpace = string.Join('.', namespaces, 0, namespaces.Length - 1);
         }
 
-
-        private static void HandleMethodMember(XElement root, MemberModel member) 
+        /// <summary>
+        ///     Handles the processing of a M: "member" element
+        /// </summary>
+        /// <param name="methodElement">The "member" <see cref="XElement"/> with a name value beginning with M:</param>
+        /// <param name="member">The <see cref="MemberModel"/> reference</param>
+        private static void HandleMethodMember(XElement methodElement, MemberModel member) 
         { 
             //  Get the name without the M:
             var name = member.Name.Replace("M:", "");
 
             // TODO handle #ctor and () methods
         }
-        private static void HandleEventMember(XElement root, MemberModel member) { }
-        private static void HandleErrorMember(XElement root, MemberModel member) { }
+
+
+        /// <summary>
+        ///     Handles the processing of a E: "member" element
+        /// </summary>
+        /// <param name="eventElement">The "member" <see cref="XElement"/> with a name value beginning with E:</param>
+        /// <param name="member">The <see cref="MemberModel"/> reference</param>        
+        private static void HandleEventMember(XElement eventElement, MemberModel member) { }
+
+        /// <summary>
+        ///     Handles the processing of a !: "member" element
+        /// </summary>
+        /// <param name="errorElement">The "member" <see cref="XElement"/> with a name value beginning with !:</param>
+        /// <param name="member">The <see cref="MemberModel"/> reference</param>         
+        private static void HandleErrorMember(XElement errorElement, MemberModel member) { }
 
     }
 }

@@ -2,12 +2,35 @@ using System.Collections.Generic;
 
 namespace SharpDown.Models
 {
+    /// <summary>
+    ///     Represents an type member type
+    /// </summary>
     public class TypeMemberModel : MemberModel
     {
-        public List<MethodModel> Constructors {get; set;}
-        public List<FieldMemberModel> Fields {get; set;}
-        public List<PropertyMemberModel> Properties {get; set;}
-        public List<EventMemberModel> Events {get; set;}
-        public List<MethodMemberModel> Methods {get; set;}
+
+        /// <summary>
+        ///     Gets or Sets the constructor method members
+        /// </summary>
+        public List<MethodMemberModel> Constructors { get; set; }
+
+        /// <summary>
+        ///     Gets or Sets the field members
+        /// </summary>
+        public List<FieldMemberModel> Fields { get; set; }
+
+        /// <summary>
+        ///     Gets or Sets the property members
+        /// </summary>
+        public List<PropertyMemberModel> Properties { get; set; }
+
+        /// <summary>
+        ///     Gets or Sets the event members
+        /// </summary>
+        public List<EventMemberModel> Events { get; set; }
+
+        /// <summary>
+        ///     Gets or Sets the non-constructor method members
+        /// </summary>
+        public List<MethodMemberModel> Methods { get; set; }
     }
 }

@@ -4,8 +4,14 @@ using System.Xml.Linq;
 
 namespace SharpDown
 {
+    /// <summary>
+    ///     Imports the XML Document to process
+    /// </summary>
     public static class Importer
     {
+        /// <summary>
+        ///     Tells the importer to begin
+        /// </summary>
         public static XDocument Run(string filePath)
         {
             //  Load the document
