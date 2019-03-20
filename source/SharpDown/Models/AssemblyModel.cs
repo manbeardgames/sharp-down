@@ -38,7 +38,7 @@ namespace SharpDown.Models
                 }
                 else
                 {
-                    return Types.FirstOrDefault(x => x.Member.Name == memberName);
+                    return Types.FirstOrDefault(x => x.Member.NameID == memberName);
                 }
             }
         }

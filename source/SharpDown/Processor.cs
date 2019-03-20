@@ -5,12 +5,23 @@ using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
 using SharpDown.Models;
+using SharpDown.Models.Tags;
 
 namespace SharpDown
 {
-    /// <summary>
-    ///     Processes the <see cref="XDocument"/> imported by the <see cref="Importer"/>
+    /// <summary type="class">
+    ///     Processes the XDocument imported by the <see cref="Importer"/>
     /// </summary>
+    /// <example>
+    ///     <code>
+    ///         // Use the importer to import an XML Document
+    ///         var document = Importer.Run("path/to/xml/document");
+    ///
+    ///         //  Pass the document to the Processor.Run method to get
+    ///         //  the results
+    ///         AssemblyModel result = Processor.Run(document);
+    ///     </code>
+    /// </example>
     public static class Processor
     {
         //  The assembly model that is cretaed from the processing
@@ -19,10 +30,11 @@ namespace SharpDown
         /// <summary>
         ///     Tells the processor to begin
         /// </summary>
-        public static void Run(XDocument doc)
+        public static AssemblyModel Run(XDocument doc)
         {
             _assembly = new AssemblyModel();
             Process(doc.Root);
+            return _assembly;
         }
 
         /// <summary>
@@ -105,35 +117,35 @@ namespace SharpDown
                 Process(typeMember);
             }
 
-            //  Process all F: Members
-            foreach(var fieldMembers in f)
-            {
-                Process(fieldMembers);
-            }
+            // //  Process all F: Members
+            // foreach(var fieldMembers in f)
+            // {
+            //     Process(fieldMembers);
+            // }
 
-            //  Process all P: Members
-            foreach(var propertyMember in p)
-            {
-                Process(propertyMember);
-            }
+            // //  Process all P: Members
+            // foreach(var propertyMember in p)
+            // {
+            //     Process(propertyMember);
+            // }
 
-            //  Process all M: Members
-            foreach(var methodMember in m)
-            {
-                Process(methodMember);
-            }
+            // //  Process all M: Members
+            // foreach(var methodMember in m)
+            // {
+            //     Process(methodMember);
+            // }
 
-            //  Process all E: members
-            foreach(var eventMember in e)
-            {
-                Process(eventMember);
-            }
+            // //  Process all E: members
+            // foreach(var eventMember in e)
+            // {
+            //     Process(eventMember);
+            // }
 
-            //  Process all !: Members
-            foreach(var bangMember in bang)
-            {
-                Process(bangMember);
-            }
+            // //  Process all !: Members
+            // foreach(var bangMember in bang)
+            // {
+            //     Process(bangMember);
+            // }
 
         }
 
@@ -147,13 +159,13 @@ namespace SharpDown
             var member = new MemberModel();
 
             //  Set the member assembly
-            member.Assembly = _assembly.Name;
+            member.Assembly = _assembly;
 
             //  Get the name identifier from the member
-            member.Name = memberElement.Attribute(XName.Get("name")).Value;
+            member.NameID = memberElement.Attribute(XName.Get("name")).Value;
 
             //  The first character of the name is the type of member
-            member.MemberType = member.Name[0];
+            member.MemberType = member.NameID[0];
 
 
 
@@ -198,19 +210,76 @@ namespace SharpDown
         private static void HandleTypeMember(XElement typeElement, MemberModel member)
         {
             //  Get the name without the T: type string
-            var name = member.Name.Replace("T:", "");
+            //  Example -- 'T:SharpDown.Processor' becomes 'SharpDown.Processor'
+            var name = member.NameID.Replace("T:", "");
 
             //  Split the name by the periods
+            //   Example -- 'SharpDown.Processor' becomes ['SharpDown', 'Processor']
             var nameSpaces = name.Split('.');
 
             //  Rejoing the split name with periods, excluding the last element to form
             //  the namespace
+            //  Example -- ['SharpDown', 'Processor'] becomes 'SharpDown'
             member.NameSpace = string.Join('.', nameSpaces, 0, nameSpaces.Length - 1);
 
+            //  Get the name of the member.  It's the last element in the namespaces list
+            //  Example -- ['SharpDown', 'Processor'] becomes 'Processor'
+            member.Name = nameSpaces[nameSpaces.Length - 1];
+
+
+            //  Handle the child elements
+            HandleMemberChildren(typeElement, member);
+
+            // Create a new TypeMemberModel based on this member
             TypeMemberModel model = new TypeMemberModel(member);
 
+            //  Add this to the assemblies Type collection
             _assembly.Types.Add(model);
         }
+
+        private static void HandleMemberChildren(XElement root, MemberModel member)
+        {
+            //  Create a new list of tags
+            member.Tags = new List<Tag>();
+
+            if (root.HasElements)
+            {
+                foreach (var element in root.Elements())
+                {
+                    member.Tags.Add(ProcessTag(element));
+                }
+            }
+        }
+
+        private static Tag ProcessTag(XElement root)
+        {
+            Tag tag = new Tag();
+            tag.Name = root.Name.ToString();
+            tag.Value = root.Value;
+            if (root.HasElements)
+            {
+                foreach (var element in root.Elements())
+                {
+                    tag.Children.Add(ProcessTag(element));
+                }
+            }
+
+            return tag;
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
         /// <summary>
@@ -221,7 +290,7 @@ namespace SharpDown
         private static void HandleFieldMember(XElement fieldElement, MemberModel member)
         {
             //  Ge thte name without the F:
-            var name = member.Name.Replace("F:", "");
+            var name = member.NameID.Replace("F:", "");
 
             //  Split the name by the periods
             var namespaces = name.Split('.');
@@ -233,7 +302,7 @@ namespace SharpDown
             FieldMemberModel model = new FieldMemberModel(member);
 
             // var match = _assembly.Types.FirstOrDefault
-            
+
         }
 
         /// <summary>
@@ -244,7 +313,7 @@ namespace SharpDown
         private static void HandlePropertyMember(XElement propertyElement, MemberModel member)
         {
             //  Get the name without the P:
-            var name = member.Name.Replace("P:", "");
+            var name = member.NameID.Replace("P:", "");
 
             //  Split the name by periods
             var namespaces = name.Split(',');
@@ -259,10 +328,10 @@ namespace SharpDown
         /// </summary>
         /// <param name="methodElement">The "member" <see cref="XElement"/> with a name value beginning with M:</param>
         /// <param name="member">The <see cref="MemberModel"/> reference</param>
-        private static void HandleMethodMember(XElement methodElement, MemberModel member) 
-        { 
+        private static void HandleMethodMember(XElement methodElement, MemberModel member)
+        {
             //  Get the name without the M:
-            var name = member.Name.Replace("M:", "");
+            var name = member.NameID.Replace("M:", "");
 
             // TODO handle #ctor and () methods
 
